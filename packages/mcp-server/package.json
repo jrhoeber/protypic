@@ -1,0 +1,31 @@
+{
+  "name": "@protypic/mcp",
+  "version": "0.0.1",
+  "description": "MCP server for protypic — upload and manage prototypes from any MCP-compatible harness.",
+  "license": "MIT",
+  "type": "module",
+  "keywords": ["mcp", "model-context-protocol", "protypic", "prototype", "claude"],
+  "bin": {
+    "protypic-mcp": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit && esbuild src/index.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/index.js --external:@modelcontextprotocol/sdk --external:zod",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.0.4",
+    "zod": "3.23.8"
+  },
+  "devDependencies": {
+    "@protypic/shared": "workspace:*",
+    "@types/node": "20.16.10",
+    "esbuild": "0.24.0",
+    "typescript": "5.6.3"
+  },
+  "engines": {
+    "node": ">=20.10.0"
+  }
+}
