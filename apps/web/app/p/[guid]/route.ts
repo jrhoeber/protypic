@@ -17,12 +17,12 @@ export async function GET(req: NextRequest, { params }: { params: { guid: string
   if (!p || isExpired(p)) return new NextResponse("Not Found", { status: 404 });
 
   if (p.isProtected && !verifyUnlockCookie(p.id)) {
-    return NextResponse.redirect(new URL(`/p/${p.id}/locked`, req.url), 303);
+    return NextResponse.redirect(`${env.viewBaseUrl()}/p/${p.id}/locked`, 303);
   }
 
   const expiresAt = p.expiresAt ? new Date(p.expiresAt) : null;
   const cookie = buildUnlockCookie(p.id, expiresAt);
-  const res = NextResponse.redirect(new URL(`/p/${p.id}/${p.entryFile}`, req.url), 303);
+  const res = NextResponse.redirect(`${env.viewBaseUrl()}/p/${p.id}/${p.entryFile}`, 303);
   res.cookies.set(cookie.name, cookie.value, {
     path: cookie.path,
     expires: cookie.expiresAt,

@@ -42,7 +42,7 @@ export async function GET(
   }
 
   if (!verifyUnlockCookie(params.guid)) {
-    return NextResponse.redirect(new URL(`/p/${params.guid}`, req.url), 302);
+    return NextResponse.redirect(`${env.viewBaseUrl()}/p/${params.guid}`, 302);
   }
 
   if (
