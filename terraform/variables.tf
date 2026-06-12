@@ -11,14 +11,14 @@ variable "region" {
 
 variable "domain" {
   type        = string
-  description = "Primary public domain, e.g. protypic.ai."
+  description = "Primary public domain for the portal + API, e.g. protypic.ai."
   default     = "protypic.ai"
 }
 
-variable "cdn_subdomain" {
+variable "view_subdomain" {
   type        = string
-  description = "Subdomain used for static asset CDN, e.g. cdn.protypic.ai."
-  default     = "cdn.protypic.ai"
+  description = "Origin-isolated host that serves user-uploaded prototype content. MUST be a different origin from var.domain so portal cookies are not sent to prototype HTML/JS."
+  default     = "view.protypic.ai"
 }
 
 variable "image" {

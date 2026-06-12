@@ -11,10 +11,11 @@ function optional(name: string): string | undefined {
 export const env = {
   projectId: () => required("GCP_PROJECT_ID"),
   bucket: () => required("GCS_PROTOTYPES_BUCKET"),
-  cdnBaseUrl: () => required("CDN_BASE_URL"),
-  cdnKeyName: () => required("CDN_SIGNING_KEY_NAME"),
-  cdnKeyValue: () => required("CDN_SIGNING_KEY_VALUE"),
+  cookieSecret: () => required("COOKIE_SECRET"),
   apiTokenPepper: () => required("API_TOKEN_PEPPER"),
+  portalHost: () => required("PORTAL_HOST"),
+  viewHost: () => required("VIEW_HOST"),
+  viewBaseUrl: () => `https://${required("VIEW_HOST")}`,
   publicAppUrl: () => process.env.NEXT_PUBLIC_APP_URL || "https://protypic.ai",
 
   firestoreEmulator: () => optional("FIRESTORE_EMULATOR_HOST"),

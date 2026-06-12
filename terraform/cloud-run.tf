@@ -3,6 +3,16 @@ resource "google_cloud_run_v2_service" "web" {
   location = var.region
   ingress  = "INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER"
 
+  # After bootstrap, CI owns the image tag. Without this, every `terraform apply`
+  # would revert Cloud Run to whatever `var.image` says (typically `:bootstrap`).
+  lifecycle {
+    ignore_changes = [
+      template[0].containers[0].image,
+      client,
+      client_version,
+    ]
+  }
+
   template {
     service_account = google_service_account.web.email
 
@@ -30,12 +40,12 @@ resource "google_cloud_run_v2_service" "web" {
         value = google_storage_bucket.prototypes.name
       }
       env {
-        name  = "CDN_BASE_URL"
-        value = "https://${var.cdn_subdomain}"
+        name  = "PORTAL_HOST"
+        value = var.domain
       }
       env {
-        name  = "CDN_SIGNING_KEY_NAME"
-        value = "protypic-cdn-key"
+        name  = "VIEW_HOST"
+        value = var.view_subdomain
       }
       env {
         name  = "NEXT_PUBLIC_APP_URL"
@@ -43,10 +53,10 @@ resource "google_cloud_run_v2_service" "web" {
       }
 
       env {
-        name = "CDN_SIGNING_KEY_VALUE"
+        name = "COOKIE_SECRET"
         value_source {
           secret_key_ref {
-            secret  = google_secret_manager_secret.cdn_key.secret_id
+            secret  = google_secret_manager_secret.cookie_secret.secret_id
             version = "latest"
           }
         }
@@ -66,7 +76,7 @@ resource "google_cloud_run_v2_service" "web" {
 
   depends_on = [
     google_project_service.enabled,
-    google_secret_manager_secret_iam_member.web_cdn_key,
+    google_secret_manager_secret_iam_member.web_cookie_secret,
     google_secret_manager_secret_iam_member.web_pepper,
   ]
 }
@@ -95,4 +105,14 @@ resource "google_cloud_run_v2_service_iam_member" "scheduler_invoker" {
   name     = google_cloud_run_v2_service.web.name
   role     = "roles/run.invoker"
   member   = "serviceAccount:${google_service_account.scheduler.email}"
+}
+
+# Public invokes via the LB. Ingress restriction (INTERNAL_LOAD_BALANCER, above)
+# still blocks the raw *.run.app URL from the internet — this only allows traffic
+# that came through the LB to be served.
+resource "google_cloud_run_v2_service_iam_member" "public_invoker" {
+  location = google_cloud_run_v2_service.web.location
+  name     = google_cloud_run_v2_service.web.name
+  role     = "roles/run.invoker"
+  member   = "allUsers"
 }

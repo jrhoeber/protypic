@@ -3,9 +3,11 @@
 import { getApp, getApps, initializeApp } from "firebase/app";
 import {
   GoogleAuthProvider,
+  connectAuthEmulator,
   getAuth,
   signInWithPopup,
   signOut as fbSignOut,
+  type Auth,
 } from "firebase/auth";
 
 const config = {
@@ -19,8 +21,15 @@ export function clientApp() {
   return getApps().length ? getApp() : initializeApp(config);
 }
 
-export function clientAuth() {
-  return getAuth(clientApp());
+let _auth: Auth | null = null;
+export function clientAuth(): Auth {
+  if (_auth) return _auth;
+  _auth = getAuth(clientApp());
+  const emuHost = process.env.NEXT_PUBLIC_AUTH_EMULATOR_HOST;
+  if (emuHost) {
+    connectAuthEmulator(_auth, `http://${emuHost}`, { disableWarnings: true });
+  }
+  return _auth;
 }
 
 export async function signInWithGoogle() {

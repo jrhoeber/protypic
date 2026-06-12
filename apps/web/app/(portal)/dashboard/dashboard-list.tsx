@@ -3,7 +3,13 @@
 import { useState } from "react";
 import type { Prototype } from "@protypic/shared";
 
-export function DashboardList({ prototypes: initial }: { prototypes: Prototype[] }) {
+export function DashboardList({
+  prototypes: initial,
+  viewBaseUrl,
+}: {
+  prototypes: Prototype[];
+  viewBaseUrl: string;
+}) {
   const [items, setItems] = useState(initial);
   const [busyId, setBusyId] = useState<string | null>(null);
 
@@ -19,7 +25,7 @@ export function DashboardList({ prototypes: initial }: { prototypes: Prototype[]
   return (
     <ul style={listStyle}>
       {items.map((p) => {
-        const url = `${typeof window === "undefined" ? "" : window.location.origin}/p/${p.id}`;
+        const url = `${viewBaseUrl}/p/${p.id}`;
         return (
           <li key={p.id} style={itemStyle}>
             <div style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}>

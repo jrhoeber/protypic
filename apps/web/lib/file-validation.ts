@@ -24,6 +24,12 @@ function normalizePath(raw: string): string {
   if (trimmed.startsWith("/") || trimmed.includes("..")) {
     throw new UploadValidationError(`Illegal path: ${raw}`);
   }
+  if (/[\x00-\x1f\x7f]/.test(trimmed)) {
+    throw new UploadValidationError(`Illegal characters in path: ${raw}`);
+  }
+  if (trimmed.split("/").some((s) => s.length === 0 || s.length > 256)) {
+    throw new UploadValidationError(`Illegal path segment: ${raw}`);
+  }
   return trimmed;
 }
 

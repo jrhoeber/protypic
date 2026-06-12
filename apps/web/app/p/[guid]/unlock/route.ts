@@ -1,18 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
+import { headers } from "next/headers";
 import { z } from "zod";
 import { getPrototype, isExpired } from "@/lib/prototypes";
 import { verifyAccessCode } from "@/lib/access-code";
-import { buildPrototypeCookie } from "@/lib/signed-cookie";
+import { buildUnlockCookie } from "@/lib/prototype-session";
+import { consumeUnlockAttempt } from "@/lib/unlock-throttle";
 import { env } from "@/lib/env";
 import { handleApiError, jsonError } from "@/lib/http";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const bodySchema = z.object({ accessCode: z.string().min(1) });
+const bodySchema = z.object({ accessCode: z.string().min(1).max(256) });
 
 export async function POST(req: NextRequest, { params }: { params: { guid: string } }) {
   try {
+    const host = (headers().get("host") ?? "").split(":")[0]!.toLowerCase();
+    if (host !== env.viewHost().toLowerCase()) return jsonError("Not found.", 404);
+
+    const allowed = await consumeUnlockAttempt(params.guid);
+    if (!allowed) return jsonError("Too many attempts. Try again later.", 429);
+
     const { accessCode } = bodySchema.parse(await req.json());
     const p = await getPrototype(params.guid);
     if (!p || isExpired(p)) return jsonError("Not found.", 404);
@@ -24,20 +32,15 @@ export async function POST(req: NextRequest, { params }: { params: { guid: strin
     }
 
     const expiresAt = p.expiresAt ? new Date(p.expiresAt) : null;
-    const cdnCookie = buildPrototypeCookie(p.id, expiresAt);
-    const entry = env.cdnBaseUrl().replace(/\/+$/, "") + `/p/${p.id}/${p.entryFile}`;
+    const cookie = buildUnlockCookie(p.id, expiresAt);
+    const target = `${env.viewBaseUrl()}/p/${p.id}/${p.entryFile}`;
 
-    const res = NextResponse.redirect(entry, { status: 303 });
-    res.cookies.set(cdnCookie.name, cdnCookie.value, {
-      path: cdnCookie.path,
-      expires: cdnCookie.expiresAt,
-      secure: true,
-    });
-    res.cookies.set(`protypic_unlocked_${p.id}`, "1", {
-      path: `/p/${p.id}`,
-      expires: cdnCookie.expiresAt,
-      secure: true,
+    const res = NextResponse.redirect(target, { status: 303 });
+    res.cookies.set(cookie.name, cookie.value, {
+      path: cookie.path,
+      expires: cookie.expiresAt,
       httpOnly: true,
+      secure: true,
       sameSite: "lax",
     });
     return res;

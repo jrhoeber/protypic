@@ -4,35 +4,10 @@ resource "google_compute_global_address" "lb" {
   depends_on = [google_project_service.enabled]
 }
 
-# Cloud CDN signing key (HMAC) — attached to the backend bucket for signed cookies.
-resource "google_compute_backend_bucket_signed_url_key" "cdn_key" {
-  name           = "protypic-cdn-key"
-  backend_bucket = google_compute_backend_bucket.prototypes.name
-  key_value      = random_id.cdn_signing_key.b64_url
-}
-
-resource "google_compute_backend_bucket" "prototypes" {
-  name                    = "protypic-prototypes-backend"
-  bucket_name             = google_storage_bucket.prototypes.name
-  enable_cdn              = true
-  compression_mode        = "AUTOMATIC"
-  edge_security_policy    = null
-  custom_response_headers = ["Cache-Control: public, max-age=31536000, immutable"]
-
-  depends_on = [google_project_service.enabled]
-
-  cdn_policy {
-    cache_mode                   = "CACHE_ALL_STATIC"
-    client_ttl                   = 3600
-    default_ttl                  = 3600
-    max_ttl                      = 86400
-    negative_caching             = true
-    serve_while_stale            = 0
-    signed_url_cache_max_age_sec = 600
-  }
-}
-
-# Cloud Run backend (the gate, portal, and API).
+# Cloud Run backend (portal + API on var.domain, prototype gate + streaming on
+# var.view_subdomain). The same Cloud Run service is served on both hosts; app
+# middleware enforces that the two hostnames serve disjoint route sets so that
+# portal cookies never reach prototype origins.
 resource "google_compute_region_network_endpoint_group" "web_neg" {
   name                  = "protypic-web-neg"
   network_endpoint_type = "SERVERLESS"
@@ -54,44 +29,22 @@ resource "google_compute_backend_service" "web" {
   }
 }
 
-# URL map:
-#   cdn.protypic.ai/*  → backend bucket (signed cookie required)
-#   protypic.ai/*      → Cloud Run service
 resource "google_compute_url_map" "lb" {
   name            = "protypic-url-map"
   default_service = google_compute_backend_service.web.id
-
-  host_rule {
-    hosts        = [var.domain]
-    path_matcher = "web"
-  }
-  host_rule {
-    hosts        = [var.cdn_subdomain]
-    path_matcher = "cdn"
-  }
-
-  path_matcher {
-    name            = "web"
-    default_service = google_compute_backend_service.web.id
-  }
-
-  path_matcher {
-    name            = "cdn"
-    default_service = google_compute_backend_bucket.prototypes.id
-    path_rule {
-      paths   = ["/p/*"]
-      service = google_compute_backend_bucket.prototypes.id
-    }
-  }
 }
 
 resource "google_compute_managed_ssl_certificate" "lb" {
-  name = "protypic-cert"
+  name = "protypic-cert-v2"
   managed {
-    domains = [var.domain, var.cdn_subdomain]
+    domains = [var.domain, var.view_subdomain]
   }
 
   depends_on = [google_project_service.enabled]
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "google_compute_target_https_proxy" "lb" {

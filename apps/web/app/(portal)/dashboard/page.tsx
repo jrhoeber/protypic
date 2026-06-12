@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getUserFromSessionCookie } from "@/lib/auth";
 import { listPrototypesForUser } from "@/lib/prototypes";
+import { env } from "@/lib/env";
 import { DashboardList } from "./dashboard-list";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +24,7 @@ export default async function DashboardPage() {
           No prototypes yet. <Link href="/upload" style={{ color: "#fff" }}>Upload one</Link>.
         </p>
       ) : (
-        <DashboardList prototypes={prototypes} />
+        <DashboardList prototypes={prototypes} viewBaseUrl={env.viewBaseUrl()} />
       )}
     </main>
   );

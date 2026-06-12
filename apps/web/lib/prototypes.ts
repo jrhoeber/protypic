@@ -75,7 +75,7 @@ export async function createPrototype(input: {
   return {
     ...toPrototype(id, doc),
     accessCode,
-    url: `${env.publicAppUrl()}/p/${id}`,
+    url: `${env.viewBaseUrl()}/p/${id}`,
   };
 }
 

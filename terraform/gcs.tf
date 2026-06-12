@@ -4,10 +4,13 @@ resource "google_storage_bucket" "prototypes" {
   uniform_bucket_level_access = true
   force_destroy               = false
 
+  # Prototype objects are streamed to viewers by the Cloud Run service, which
+  # authenticates to GCS via its service account. The bucket stays fully
+  # private — direct anonymous reads are denied.
   public_access_prevention = "enforced"
 
   cors {
-    origin          = ["https://${var.domain}"]
+    origin          = ["https://${var.view_subdomain}"]
     method          = ["GET", "HEAD"]
     response_header = ["Content-Type"]
     max_age_seconds = 3600

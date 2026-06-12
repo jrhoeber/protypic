@@ -21,8 +21,10 @@ function bucket() {
   return storage().bucket(env.bucket());
 }
 
+// Object names must match the URL path served by the streaming route at
+// apps/web/app/p/[guid]/[...path]/route.ts.
 export async function uploadPrototypeFiles(id: string, files: ValidatedFile[]): Promise<void> {
-  const prefix = `prototypes/${id}/`;
+  const prefix = gcsPrefix(id);
   await Promise.all(
     files.map((f) =>
       bucket()
@@ -39,10 +41,9 @@ export async function uploadPrototypeFiles(id: string, files: ValidatedFile[]): 
 }
 
 export async function deletePrototypeFiles(id: string): Promise<void> {
-  const prefix = `prototypes/${id}/`;
-  await bucket().deleteFiles({ prefix, force: true });
+  await bucket().deleteFiles({ prefix: gcsPrefix(id), force: true });
 }
 
 export function gcsPrefix(id: string): string {
-  return `prototypes/${id}/`;
+  return `p/${id}/`;
 }

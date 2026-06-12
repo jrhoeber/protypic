@@ -21,8 +21,8 @@ resource "google_storage_bucket_iam_member" "web_bucket_admin" {
   member = "serviceAccount:${google_service_account.web.email}"
 }
 
-resource "google_secret_manager_secret_iam_member" "web_cdn_key" {
-  secret_id = google_secret_manager_secret.cdn_key.id
+resource "google_secret_manager_secret_iam_member" "web_cookie_secret" {
+  secret_id = google_secret_manager_secret.cookie_secret.id
   role      = "roles/secretmanager.secretAccessor"
   member    = "serviceAccount:${google_service_account.web.email}"
 }
@@ -33,11 +33,19 @@ resource "google_secret_manager_secret_iam_member" "web_pepper" {
   member    = "serviceAccount:${google_service_account.web.email}"
 }
 
-# Firebase Admin SDK needs to mint session cookies → tokenCreator on its own SA.
+# Firebase Admin SDK needs to mint session cookies → tokenCreator on its own SA
+# (for signBlob) plus firebaseauth.admin to call the Identity Toolkit
+# createSessionCookie endpoint.
 resource "google_service_account_iam_member" "web_token_creator" {
   service_account_id = google_service_account.web.name
   role               = "roles/iam.serviceAccountTokenCreator"
   member             = "serviceAccount:${google_service_account.web.email}"
+}
+
+resource "google_project_iam_member" "web_firebaseauth_admin" {
+  project = var.project_id
+  role    = "roles/firebaseauth.admin"
+  member  = "serviceAccount:${google_service_account.web.email}"
 }
 
 # Workload Identity Federation for GitHub Actions (no JSON keys).
