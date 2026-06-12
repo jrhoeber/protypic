@@ -43,7 +43,7 @@ resource "google_service_account_iam_member" "web_token_creator" {
 # Workload Identity Federation for GitHub Actions (no JSON keys).
 resource "google_iam_workload_identity_pool" "github" {
   count                     = var.github_repo == "" ? 0 : 1
-  workload_identity_pool_id = "github-pool"
+  workload_identity_pool_id = "github-pool-v2"
   display_name              = "GitHub Actions"
 }
 
