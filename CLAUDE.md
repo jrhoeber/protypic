@@ -22,13 +22,16 @@ pnpm -F @protypic/web typecheck
 pnpm -F @protypic/mcp build       # tsc check + esbuild bundle to dist/index.js
 ```
 
-Local dev also needs Firebase emulators running alongside `pnpm dev`:
+Local dev hits the **real** prod Firebase + GCS project (no emulators). One-time setup:
 
 ```bash
-firebase emulators:start          # Auth + Firestore (+ optional Storage)
+gcloud auth application-default login    # creds for firebase-admin + @google-cloud/storage
+# Then in Firebase console → Authentication → Settings → Authorized domains, add `localhost`.
 ```
 
-`.env.local` must be populated from `.env.example` (Firebase web config, `GCP_PROJECT_ID`, `GCS_PROTOTYPES_BUCKET`, `PORTAL_HOST`, `VIEW_HOST`, `COOKIE_SECRET`, `API_TOKEN_PEPPER`, emulator hosts).
+Then `make run` (which runs `make env shared` and starts `next dev` on :3000). Portal: `http://localhost:3000`. Prototype: `http://view.localhost:3000/p/{guid}` — `*.localhost` resolves to 127.0.0.1 automatically.
+
+`apps/web/.env.local` must be populated from `apps/web/.env.local.example`: Firebase web config, `GCP_PROJECT_ID`, `GCS_PROTOTYPES_BUCKET`, `PORTAL_HOST`, `VIEW_HOST`, `VIEW_BASE_URL`, `COOKIE_SECRET`, `API_TOKEN_PEPPER`. The repo-root `.env.example` documents the prod variable shape (Cloud Run env + Secret Manager). `make emulators` still works as an offline escape hatch but is not the default path.
 
 There is no test runner configured in this repo.
 

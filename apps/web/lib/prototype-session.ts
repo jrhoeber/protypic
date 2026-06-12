@@ -42,7 +42,7 @@ export function setUnlockCookie(guid: string, prototypeExpiresAt: Date | null): 
     path: c.path,
     expires: c.expiresAt,
     httpOnly: true,
-    secure: true,
+    secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
   });
   return c;

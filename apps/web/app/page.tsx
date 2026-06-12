@@ -1,18 +1,24 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getUserFromSessionCookie } from "../lib/auth";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const user = await getUserFromSessionCookie();
+  if (user) redirect("/dashboard");
+
   return (
     <main style={styles.page}>
       <section style={styles.hero}>
         <h1 style={styles.title}>protypic</h1>
         <p style={styles.tagline}>Share vibe-coded prototypes via short URLs.</p>
         <p style={styles.sub}>
-          Drop in a single HTML file or a folder of static assets. Get back a link, an
-          access code, and an expiration date.
+          Drop in a single HTML file or a folder of static assets. Get back a
+          link, an access code, and an expiration date.
         </p>
         <div style={styles.ctas}>
-          <Link href="/dashboard" style={styles.primaryCta}>Open dashboard</Link>
-          <Link href="/login" style={styles.secondaryCta}>Sign in</Link>
+          <Link href="/login" style={styles.cta}>
+            Sign in
+          </Link>
         </div>
       </section>
     </main>
@@ -26,17 +32,45 @@ const styles: Record<string, React.CSSProperties> = {
     placeItems: "center",
     padding: 24,
   },
-  hero: { maxWidth: 560, textAlign: "center", display: "flex", flexDirection: "column", gap: 16 },
-  title: { margin: 0, fontSize: 56, fontWeight: 700, letterSpacing: -1 },
-  tagline: { margin: 0, fontSize: 18, color: "#d4d4d4" },
-  sub: { margin: 0, color: "#a3a3a3", lineHeight: 1.55 },
-  ctas: { display: "flex", gap: 12, justifyContent: "center", marginTop: 8 },
-  primaryCta: {
-    background: "#fff", color: "#0a0a0a", borderRadius: 8,
-    padding: "10px 16px", fontWeight: 600, textDecoration: "none",
+  hero: {
+    maxWidth: 520,
+    textAlign: "center",
+    display: "flex",
+    flexDirection: "column",
+    gap: 14,
   },
-  secondaryCta: {
-    background: "transparent", color: "#fff", border: "1px solid #333", borderRadius: 8,
-    padding: "10px 16px", fontWeight: 500, textDecoration: "none",
+  title: {
+    margin: 0,
+    fontSize: 48,
+    fontWeight: 700,
+    letterSpacing: -1.5,
+    color: "var(--text)",
+  },
+  tagline: {
+    margin: 0,
+    fontSize: 16,
+    color: "var(--text-muted)",
+  },
+  sub: {
+    margin: 0,
+    color: "var(--text-dim)",
+    fontSize: 14,
+    lineHeight: 1.6,
+  },
+  ctas: {
+    display: "flex",
+    gap: 10,
+    justifyContent: "center",
+    marginTop: 12,
+  },
+  cta: {
+    background: "var(--text)",
+    color: "var(--bg)",
+    border: "1px solid var(--text)",
+    borderRadius: 8,
+    padding: "10px 20px",
+    fontWeight: 600,
+    fontSize: 14,
+    textDecoration: "none",
   },
 };

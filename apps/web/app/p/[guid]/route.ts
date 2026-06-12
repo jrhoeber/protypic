@@ -27,7 +27,7 @@ export async function GET(req: NextRequest, { params }: { params: { guid: string
     path: cookie.path,
     expires: cookie.expiresAt,
     httpOnly: true,
-    secure: true,
+    secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
   });
   return res;

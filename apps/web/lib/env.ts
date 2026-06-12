@@ -15,7 +15,9 @@ export const env = {
   apiTokenPepper: () => required("API_TOKEN_PEPPER"),
   portalHost: () => required("PORTAL_HOST"),
   viewHost: () => required("VIEW_HOST"),
-  viewBaseUrl: () => `https://${required("VIEW_HOST")}`,
+  // VIEW_BASE_URL lets local dev override the scheme/port (e.g. http://view.lvh.me:3000).
+  // In prod we derive https://${VIEW_HOST} since the LB terminates TLS on 443.
+  viewBaseUrl: () => process.env.VIEW_BASE_URL || `https://${required("VIEW_HOST")}`,
   publicAppUrl: () => process.env.NEXT_PUBLIC_APP_URL || "https://protypic.ai",
 
   firestoreEmulator: () => optional("FIRESTORE_EMULATOR_HOST"),

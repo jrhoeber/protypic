@@ -40,7 +40,7 @@ export async function POST(req: NextRequest, { params }: { params: { guid: strin
       path: cookie.path,
       expires: cookie.expiresAt,
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
     });
     return res;

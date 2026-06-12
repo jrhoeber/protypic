@@ -97,6 +97,25 @@ export async function listPrototypesForUser(ownerUid: string): Promise<Prototype
   return snap.docs.map((d) => toPrototype(d.id, d.data() as DocFields));
 }
 
+export type RotateAccessCodeResult =
+  | { status: "ok"; accessCode: string }
+  | { status: "not_found" }
+  | { status: "not_protected" };
+
+export async function rotateAccessCode(
+  id: string,
+  ownerUid: string,
+): Promise<RotateAccessCodeResult> {
+  const ref = adminDb().collection(COL).doc(id);
+  const snap = await ref.get();
+  if (!snap.exists) return { status: "not_found" };
+  if (snap.get("ownerUid") !== ownerUid) return { status: "not_found" };
+  if (!snap.get("isProtected")) return { status: "not_protected" };
+  const accessCode = newGuid();
+  await ref.update({ accessCodeHash: hashAccessCode(accessCode) });
+  return { status: "ok", accessCode };
+}
+
 export async function deletePrototype(id: string, ownerUid: string): Promise<boolean> {
   const ref = adminDb().collection(COL).doc(id);
   const snap = await ref.get();
