@@ -13,6 +13,15 @@ resource "google_cloud_run_v2_service" "web" {
     ]
   }
 
+  # Always route 100% of traffic to the latest revision. Without this, GCP can
+  # pin traffic to a specific revisionName, after which `gcloud run deploy` from
+  # CI happily creates new revisions but does not promote them — the service
+  # keeps serving the pinned revision indefinitely (see incident 2026-06-12).
+  traffic {
+    type    = "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST"
+    percent = 100
+  }
+
   template {
     service_account = google_service_account.web.email
 

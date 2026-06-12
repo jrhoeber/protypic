@@ -34,6 +34,7 @@ export function clientAuth(): Auth {
 
 export async function signInWithGoogle() {
   const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: "select_account" });
   await signInWithPopup(clientAuth(), provider);
 }
 
