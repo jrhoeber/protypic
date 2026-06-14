@@ -14,6 +14,17 @@ export function DashboardList({
   const [busyId, setBusyId] = useState<string | null>(null);
   const [rotatingId, setRotatingId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [flash, setFlash] = useState<string | null>(null);
+
+  function flashCopy(label: string) {
+    setFlash(label);
+    setTimeout(() => setFlash(null), 1400);
+  }
+
+  async function copyLink(url: string) {
+    await navigator.clipboard.writeText(url);
+    flashCopy("Link copied");
+  }
 
   async function remove(id: string) {
     if (!confirm("Delete this prototype? This can't be undone.")) return;
@@ -48,43 +59,48 @@ export function DashboardList({
   }, [items, query]);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <input
         type="search"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Search by name"
-        style={searchStyle}
+        className="input"
       />
+
       {filtered.length === 0 ? (
-        <p style={{ color: "var(--text-dim)", margin: 0, fontSize: 13 }}>
-          No prototypes match “{query}”.
-        </p>
+        <p style={noMatchStyle}>No prototypes match “{query}”.</p>
       ) : (
-        <ul style={listStyle}>
+        <ul className="divided row-list" style={listStyle}>
           {filtered.map((p) => {
             const url = `${viewBaseUrl}/p/${p.id}`;
+            const status = computeStatus(p);
             return (
-              <li key={p.id} style={itemStyle}>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8, minWidth: 0, flex: 1 }}>
-                  <div style={titleRowStyle}>
-                    <h3 style={nameStyle}>{p.name}</h3>
-                    {p.isProtected && <span style={chipStyle}>Protected</span>}
-                  </div>
+              <li key={p.id} className="stack-on-sm" style={rowStyle}>
+                <div style={textBlock}>
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={nameStyle}
+                    title="Open prototype"
+                  >
+                    {p.name}
+                  </a>
                   <div style={metaStyle}>
-                    <span>Created {formatDate(p.createdAt)}</span>
-                    <Dot />
-                    <span>
-                      {p.expiresAt ? `Expires ${formatDate(p.expiresAt)}` : "Never expires"}
-                    </span>
-                    <Dot />
-                    <span>
-                      {p.fileCount} {p.fileCount === 1 ? "file" : "files"}
-                    </span>
+                    <span className={`dot ${status.tone}`} aria-hidden />
+                    <span>{status.label}</span>
                   </div>
-                  <CopyableUrl url={url} />
                 </div>
-                <div style={actionsStyle}>
+                <div className="row-actions" style={actionsStyle}>
+                  <button
+                    className="btn btn-default"
+                    onClick={() => copyLink(url)}
+                    title="Copy link"
+                  >
+                    <LinkIcon />
+                    <span>Copy link</span>
+                  </button>
                   {p.isProtected && (
                     <NewAccessCodeButton
                       url={url}
@@ -93,112 +109,63 @@ export function DashboardList({
                       onRotate={() => rotate(p.id)}
                     />
                   )}
-                  <DeleteButton
-                    busy={busyId === p.id}
+                  <button
+                    className="btn btn-icon"
                     onClick={() => remove(p.id)}
-                  />
+                    disabled={busyId === p.id}
+                    title="Delete"
+                    aria-label="Delete prototype"
+                  >
+                    <TrashIcon />
+                  </button>
                 </div>
               </li>
             );
           })}
         </ul>
       )}
+
+      {flash && <Toast text={flash} />}
     </div>
   );
 }
 
-function Dot() {
-  return <span aria-hidden style={{ color: "var(--text-dim)", opacity: 0.5 }}>·</span>;
+function Toast({ text }: { text: string }) {
+  return (
+    <div role="status" style={toastStyle}>
+      <CheckIcon />
+      <span>{text}</span>
+    </div>
+  );
+}
+
+type Status = { label: string; tone: "dot-ok" | "dot-warn" | "dot-dim" | "dot-danger" };
+
+function computeStatus(p: Prototype): Status {
+  if (!p.expiresAt) {
+    return {
+      label: p.isProtected ? "Protected · no expiration" : "Public · no expiration",
+      tone: p.isProtected ? "dot-ok" : "dot-dim",
+    };
+  }
+  const exp = new Date(p.expiresAt).getTime();
+  const now = Date.now();
+  const days = Math.round((exp - now) / 86_400_000);
+  if (days < 0) {
+    return { label: `Expired ${formatDate(p.expiresAt)}`, tone: "dot-danger" };
+  }
+  const protectedTag = p.isProtected ? "Protected · " : "Public · ";
+  const expiresPhrase =
+    days === 0 ? "expires today" : days <= 3 ? `expires in ${days}d` : `expires ${formatDate(p.expiresAt)}`;
+  const tone: Status["tone"] = days <= 3 ? "dot-warn" : p.isProtected ? "dot-ok" : "dot-dim";
+  return { label: `${protectedTag}${expiresPhrase}`, tone };
 }
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, {
-    year: "numeric",
     month: "short",
     day: "numeric",
   });
-}
-
-function CopyableUrl({ url }: { url: string }) {
-  const [copied, setCopied] = useState(false);
-  async function copy() {
-    await navigator.clipboard.writeText(url);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1200);
-  }
-  return (
-    <div style={urlRowStyle}>
-      <a href={url} target="_blank" rel="noreferrer" style={urlLinkStyle}>
-        {url}
-      </a>
-      <button
-        type="button"
-        onClick={copy}
-        title={copied ? "Copied" : "Copy URL"}
-        aria-label={copied ? "Copied" : "Copy URL"}
-        style={iconBtnStyle}
-      >
-        {copied ? <CheckIcon /> : <CopyIcon />}
-      </button>
-    </div>
-  );
-}
-
-function DeleteButton({ busy, onClick }: { busy: boolean; onClick: () => void }) {
-  const [hover, setHover] = useState(false);
-  return (
-    <button
-      onClick={onClick}
-      disabled={busy}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      style={{
-        ...ghostBtnStyle,
-        color: hover ? "var(--danger)" : "var(--text-muted)",
-        background: hover ? "var(--danger-bg)" : "transparent",
-        borderColor: hover ? "rgba(248, 113, 113, 0.25)" : "var(--border-strong)",
-      }}
-    >
-      {busy ? "Deleting…" : "Delete"}
-    </button>
-  );
-}
-
-function CopyIcon() {
-  return (
-    <svg
-      width="13"
-      height="13"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-    </svg>
-  );
-}
-
-function CheckIcon() {
-  return (
-    <svg
-      width="13"
-      height="13"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
-  );
 }
 
 function NewAccessCodeButton({
@@ -233,44 +200,45 @@ function NewAccessCodeButton({
   return (
     <>
       <button
+        className="btn btn-ghost"
         onClick={() => setStep("confirm")}
         disabled={busy}
-        style={ghostBtnStyle}
+        title="Generate a new access code"
       >
-        New access code
+        New code
       </button>
       {step !== "closed" && (
         <Modal onClose={close}>
           {step === "confirm" ? (
             <>
-              <h2 style={modalTitleStyle}>Generate a new access code?</h2>
-              <p style={modalBodyStyle}>
-                The current access code will be permanently deleted and stop
-                working immediately. Anyone with the old code will be locked out.
+              <h2 style={modalTitle}>Generate a new access code?</h2>
+              <p style={modalBody}>
+                The current code is deleted and stops working immediately.
+                Anyone holding it will be locked out.
               </p>
-              <div style={modalActionsStyle}>
-                <button onClick={close} style={ghostBtnStyle}>
+              <div style={modalActions}>
+                <button className="btn btn-ghost" onClick={close}>
                   Cancel
                 </button>
-                <button onClick={confirm} disabled={busy} style={primaryBtnStyle}>
+                <button className="btn btn-primary" onClick={confirm} disabled={busy}>
                   {busy ? "Generating…" : "Generate"}
                 </button>
               </div>
             </>
           ) : (
             <>
-              <h2 style={modalTitleStyle}>New access code ready</h2>
-              <p style={modalBodyStyle}>
-                Save this now — the code is only shown once.
+              <h2 style={modalTitle}>New access code</h2>
+              <p style={modalBody}>
+                Save it now — it's shown only once. Already on your clipboard.
               </p>
-              <Field label="Link" value={url} />
-              <Field label="Access code" value={code ?? ""} mono />
+              <Field label="Code" value={code ?? ""} mono primary />
+              <Field label="Link" value={url} mono />
               <Field
                 label="Expires"
                 value={expiresAt ? new Date(expiresAt).toLocaleString() : "Never"}
               />
-              <div style={modalActionsStyle}>
-                <button onClick={close} style={primaryBtnStyle}>
+              <div style={modalActions}>
+                <button className="btn btn-primary" onClick={close}>
                   Done
                 </button>
               </div>
@@ -284,15 +252,25 @@ function NewAccessCodeButton({
 
 function Modal({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
   return (
-    <div role="dialog" aria-modal="true" onClick={onClose} style={modalOverlayStyle}>
-      <div onClick={(e) => e.stopPropagation()} style={modalCardStyle}>
+    <div role="dialog" aria-modal="true" onClick={onClose} style={overlay}>
+      <div onClick={(e) => e.stopPropagation()} style={card}>
         {children}
       </div>
     </div>
   );
 }
 
-function Field({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+function Field({
+  label,
+  value,
+  mono,
+  primary,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+  primary?: boolean;
+}) {
   const [copied, setCopied] = useState(false);
   async function copy() {
     await navigator.clipboard.writeText(value);
@@ -301,24 +279,29 @@ function Field({ label, value, mono }: { label: string; value: string; mono?: bo
   }
   return (
     <div style={fieldStyle}>
-      <div style={fieldLabelStyle}>{label}</div>
-      <div style={fieldRowStyle}>
+      <span style={fieldLabel}>{label}</span>
+      <div
+        style={{
+          ...fieldRow,
+          ...(primary ? { borderColor: "#3a3a3a", background: "#1c1c1c" } : {}),
+        }}
+      >
         <div
           style={{
-            ...fieldValueStyle,
-            fontFamily: mono
-              ? "ui-monospace, SFMono-Regular, Menlo, monospace"
-              : undefined,
+            ...fieldValue,
+            fontFamily: mono ? "var(--font-mono)" : undefined,
+            fontSize: primary ? 14 : 12.5,
+            color: "var(--text)",
           }}
         >
           {value}
         </div>
         <button
+          className="btn btn-icon"
           type="button"
           onClick={copy}
           title={copied ? "Copied" : `Copy ${label.toLowerCase()}`}
           aria-label={copied ? "Copied" : `Copy ${label.toLowerCase()}`}
-          style={iconBtnStyle}
         >
           {copied ? <CheckIcon /> : <CopyIcon />}
         </button>
@@ -327,45 +310,67 @@ function Field({ label, value, mono }: { label: string; value: string; mono?: bo
   );
 }
 
-const searchStyle: React.CSSProperties = {
-  background: "var(--surface)",
-  border: "1px solid var(--border)",
-  borderRadius: 8,
-  color: "var(--text)",
-  padding: "10px 12px",
-  fontSize: 13.5,
-  outline: "none",
-};
+function LinkIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.5 1.5" />
+      <path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.5-1.5" />
+    </svg>
+  );
+}
+function CopyIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    </svg>
+  );
+}
+function CheckIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  );
+}
+function TrashIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polyline points="3 6 5 6 21 6" />
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+      <path d="M10 11v6M14 11v6" />
+      <path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
+    </svg>
+  );
+}
+
 const listStyle: React.CSSProperties = {
   listStyle: "none",
   padding: 0,
   margin: 0,
+  border: "1px solid var(--border)",
+  borderRadius: 8,
+  background: "var(--surface)",
+  overflow: "hidden",
+};
+const rowStyle: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: 16,
+  padding: "16px 18px",
+};
+const textBlock: React.CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  gap: 8,
-};
-const itemStyle: React.CSSProperties = {
-  display: "flex",
-  justifyContent: "space-between",
-  gap: 24,
-  alignItems: "center",
-  padding: "16px 18px",
-  background: "var(--surface)",
-  border: "1px solid var(--border)",
-  borderRadius: 10,
-};
-const titleRowStyle: React.CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  gap: 10,
+  gap: 4,
   minWidth: 0,
+  flex: 1,
 };
 const nameStyle: React.CSSProperties = {
-  margin: 0,
-  fontSize: 15,
-  fontWeight: 600,
+  fontSize: 14.5,
+  fontWeight: 500,
   color: "var(--text)",
-  letterSpacing: -0.1,
   overflow: "hidden",
   textOverflow: "ellipsis",
   whiteSpace: "nowrap",
@@ -373,147 +378,105 @@ const nameStyle: React.CSSProperties = {
 const metaStyle: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
-  flexWrap: "wrap",
-  gap: 6,
-  color: "var(--text-dim)",
+  gap: 8,
+  color: "var(--text-muted)",
   fontSize: 12.5,
-};
-const chipStyle: React.CSSProperties = {
-  fontSize: 10.5,
-  fontWeight: 500,
-  letterSpacing: 0.3,
-  textTransform: "uppercase",
-  color: "var(--text-muted)",
-  background: "transparent",
-  border: "1px solid var(--border-strong)",
-  padding: "2px 7px",
-  borderRadius: 999,
-  flexShrink: 0,
-};
-const urlRowStyle: React.CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  gap: 6,
-  minWidth: 0,
-  marginTop: 2,
-};
-const urlLinkStyle: React.CSSProperties = {
-  fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
-  fontSize: 12,
-  color: "var(--text-muted)",
-  overflow: "hidden",
-  textOverflow: "ellipsis",
-  whiteSpace: "nowrap",
-  textDecoration: "none",
 };
 const actionsStyle: React.CSSProperties = {
   display: "flex",
-  gap: 6,
-  flexShrink: 0,
-};
-const ghostBtnStyle: React.CSSProperties = {
-  background: "transparent",
-  border: "1px solid var(--border-strong)",
-  borderRadius: 6,
-  color: "var(--text-muted)",
-  padding: "6px 12px",
-  fontSize: 13,
-  fontWeight: 500,
-  cursor: "pointer",
-  whiteSpace: "nowrap",
-};
-const primaryBtnStyle: React.CSSProperties = {
-  background: "var(--text)",
-  border: "1px solid var(--text)",
-  borderRadius: 6,
-  color: "var(--bg)",
-  padding: "6px 14px",
-  fontSize: 13,
-  fontWeight: 600,
-  cursor: "pointer",
-  whiteSpace: "nowrap",
-};
-const iconBtnStyle: React.CSSProperties = {
-  background: "transparent",
-  border: "1px solid var(--border)",
-  borderRadius: 5,
-  color: "var(--text-dim)",
-  padding: 4,
-  cursor: "pointer",
-  display: "inline-flex",
   alignItems: "center",
-  justifyContent: "center",
+  gap: 4,
   flexShrink: 0,
 };
-const modalOverlayStyle: React.CSSProperties = {
+const noMatchStyle: React.CSSProperties = {
+  color: "var(--text-muted)",
+  fontSize: 13,
+  padding: "24px 16px",
+  textAlign: "center",
+  border: "1px solid var(--border)",
+  borderRadius: 8,
+  margin: 0,
+};
+const overlay: React.CSSProperties = {
   position: "fixed",
   inset: 0,
-  background: "rgba(0, 0, 0, 0.6)",
-  backdropFilter: "blur(4px)",
+  background: "rgba(0, 0, 0, 0.55)",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
   padding: 16,
   zIndex: 50,
 };
-const modalCardStyle: React.CSSProperties = {
+const card: React.CSSProperties = {
   background: "var(--surface)",
-  border: "1px solid var(--border)",
-  borderRadius: 12,
-  padding: 24,
+  border: "1px solid var(--border-hover)",
+  borderRadius: 10,
+  padding: 22,
   width: "100%",
-  maxWidth: 460,
+  maxWidth: 440,
   display: "flex",
   flexDirection: "column",
-  gap: 14,
+  gap: 12,
   boxShadow: "0 20px 60px rgba(0, 0, 0, 0.5)",
 };
-const modalTitleStyle: React.CSSProperties = {
+const modalTitle: React.CSSProperties = {
   margin: 0,
-  fontSize: 17,
+  fontSize: 15.5,
   fontWeight: 600,
-  color: "var(--text)",
-  letterSpacing: -0.2,
+  letterSpacing: -0.1,
 };
-const modalBodyStyle: React.CSSProperties = {
+const modalBody: React.CSSProperties = {
   margin: 0,
   color: "var(--text-muted)",
-  fontSize: 13.5,
+  fontSize: 13,
   lineHeight: 1.55,
 };
-const modalActionsStyle: React.CSSProperties = {
+const modalActions: React.CSSProperties = {
   display: "flex",
-  gap: 8,
+  gap: 6,
   justifyContent: "flex-end",
-  marginTop: 8,
+  marginTop: 6,
 };
 const fieldStyle: React.CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  gap: 5,
+  gap: 4,
 };
-const fieldLabelStyle: React.CSSProperties = {
-  fontSize: 10.5,
-  textTransform: "uppercase",
-  letterSpacing: 0.6,
-  color: "var(--text-dim)",
-  fontWeight: 500,
+const fieldLabel: React.CSSProperties = {
+  fontSize: 11.5,
+  color: "var(--text-muted)",
 };
-const fieldRowStyle: React.CSSProperties = {
+const fieldRow: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
-  gap: 8,
+  gap: 6,
   background: "var(--bg)",
   border: "1px solid var(--border)",
-  borderRadius: 6,
-  padding: "8px 10px",
+  borderRadius: 5,
+  padding: "0 6px 0 10px",
+  height: 36,
 };
-const fieldValueStyle: React.CSSProperties = {
+const fieldValue: React.CSSProperties = {
   flex: 1,
   minWidth: 0,
-  color: "var(--text)",
-  fontSize: 12.5,
   overflow: "hidden",
   textOverflow: "ellipsis",
   whiteSpace: "nowrap",
+};
+const toastStyle: React.CSSProperties = {
+  position: "fixed",
+  bottom: 24,
+  left: "50%",
+  transform: "translateX(-50%)",
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 8,
+  background: "var(--text)",
+  color: "var(--bg)",
+  padding: "8px 14px",
+  borderRadius: 999,
+  fontSize: 13,
+  fontWeight: 500,
+  boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
+  zIndex: 60,
 };

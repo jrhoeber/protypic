@@ -14,18 +14,14 @@ export default async function DashboardPage() {
   const prototypes = await listPrototypesForUser(user.uid);
 
   return (
-    <main style={{ display: "flex", flexDirection: "column", gap: 28 }}>
-      <header style={headerStyle}>
-        <div>
-          <h1 style={titleStyle}>Your prototypes</h1>
-          <p style={subtitleStyle}>
-            {prototypes.length === 0
-              ? "Nothing here yet."
-              : `${prototypes.length} ${prototypes.length === 1 ? "prototype" : "prototypes"}`}
-          </p>
-        </div>
-        <Link href="/upload" style={uploadBtn}>
-          New prototype
+    <main style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+        <h1 style={{ margin: 0, fontSize: 20, fontWeight: 600, letterSpacing: -0.3 }}>
+          Prototypes
+        </h1>
+        <Link href="/upload" className="btn btn-primary">
+          <PlusIcon />
+          <span>New</span>
         </Link>
       </header>
       {prototypes.length === 0 ? (
@@ -39,49 +35,31 @@ export default async function DashboardPage() {
 
 function EmptyState() {
   return (
-    <div style={emptyStyle}>
-      <p style={{ margin: 0, color: "var(--text-muted)" }}>
-        No prototypes yet.{" "}
-        <Link href="/upload" style={{ color: "var(--text)", textDecoration: "underline", textDecorationColor: "var(--border-strong)" }}>
-          Upload your first one
-        </Link>
-        .
+    <div
+      style={{
+        border: "1px solid var(--border)",
+        borderRadius: 8,
+        padding: "48px 24px",
+        textAlign: "center",
+        background: "var(--surface)",
+      }}
+    >
+      <p style={{ margin: "0 0 14px", color: "var(--text-muted)", fontSize: 13.5 }}>
+        Nothing here yet.
       </p>
+      <Link href="/upload" className="btn btn-default">
+        <PlusIcon />
+        <span>Upload a prototype</span>
+      </Link>
     </div>
   );
 }
 
-const headerStyle: React.CSSProperties = {
-  display: "flex",
-  alignItems: "flex-end",
-  justifyContent: "space-between",
-  gap: 16,
-};
-const titleStyle: React.CSSProperties = {
-  margin: 0,
-  fontSize: 22,
-  fontWeight: 600,
-  letterSpacing: -0.3,
-};
-const subtitleStyle: React.CSSProperties = {
-  margin: "4px 0 0",
-  color: "var(--text-dim)",
-  fontSize: 13,
-};
-const uploadBtn: React.CSSProperties = {
-  background: "transparent",
-  color: "var(--text)",
-  textDecoration: "none",
-  borderRadius: 8,
-  padding: "8px 14px",
-  fontWeight: 500,
-  fontSize: 13.5,
-  border: "1px solid var(--border-strong)",
-};
-const emptyStyle: React.CSSProperties = {
-  border: "1px dashed var(--border-strong)",
-  borderRadius: 12,
-  padding: "48px 24px",
-  textAlign: "center",
-  background: "var(--surface)",
-};
+function PlusIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <line x1="5" y1="12" x2="19" y2="12" />
+    </svg>
+  );
+}

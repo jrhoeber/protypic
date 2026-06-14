@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { clientAuth, signInWithGoogle } from "@/lib/firebase-client";
 
@@ -29,44 +30,45 @@ export default function LoginPage() {
   }
 
   return (
-    <main style={pageStyle}>
-      <div style={cardStyle}>
-        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600 }}>Sign in</h1>
-        <p style={{ margin: 0, color: "#a3a3a3", fontSize: 14 }}>
-          protypic uses Google for sign-in.
-        </p>
-        <button onClick={login} disabled={busy} style={buttonStyle}>
+    <main style={page}>
+      <div style={shell}>
+        <Link href="/" style={brand}>protypic</Link>
+        <h1 style={title}>Sign in</h1>
+        <button onClick={login} disabled={busy} className="btn btn-primary" style={{ width: "100%", height: 38 }}>
           {busy ? "Signing in…" : "Continue with Google"}
         </button>
-        {error && <p style={{ color: "#fca5a5", fontSize: 13, margin: 0 }}>{error}</p>}
+        {error && <p style={errStyle}>{error}</p>}
       </div>
     </main>
   );
 }
 
-const pageStyle: React.CSSProperties = {
+const page: React.CSSProperties = {
   minHeight: "100dvh",
   display: "grid",
   placeItems: "center",
   padding: 24,
 };
-const cardStyle: React.CSSProperties = {
+const shell: React.CSSProperties = {
   width: "100%",
-  maxWidth: 380,
-  background: "#141414",
-  border: "1px solid #262626",
-  borderRadius: 12,
-  padding: 28,
+  maxWidth: 320,
   display: "flex",
   flexDirection: "column",
-  gap: 16,
+  gap: 14,
 };
-const buttonStyle: React.CSSProperties = {
-  background: "#fff",
-  color: "#0a0a0a",
-  border: 0,
-  borderRadius: 8,
-  padding: "10px 14px",
+const brand: React.CSSProperties = {
+  fontSize: 13,
+  color: "var(--text-muted)",
+  fontWeight: 500,
+};
+const title: React.CSSProperties = {
+  margin: 0,
+  fontSize: 20,
   fontWeight: 600,
-  cursor: "pointer",
+  letterSpacing: -0.2,
+};
+const errStyle: React.CSSProperties = {
+  margin: 0,
+  color: "var(--danger)",
+  fontSize: 12.5,
 };

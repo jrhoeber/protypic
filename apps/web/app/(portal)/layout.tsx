@@ -13,18 +13,25 @@ export default async function PortalLayout({ children }: { children: ReactNode }
   return (
     <div style={{ minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
       <header style={headerStyle}>
-        <div style={headerInnerStyle}>
-          <Link href="/dashboard" style={brandStyle}>protypic</Link>
-          <nav style={navStyle}>
-            <Link href="/dashboard" style={linkStyle}>Dashboard</Link>
-            <Link href="/upload" style={linkStyle}>Upload</Link>
-            <Link href="/settings" style={linkStyle}>Settings</Link>
+        <div style={headerInner}>
+          <Link href="/dashboard" style={brand}>protypic</Link>
+          <nav style={nav}>
+            <NavLink href="/dashboard">Prototypes</NavLink>
+            <NavLink href="/settings">Settings</NavLink>
             <LogoutButton />
           </nav>
         </div>
       </header>
-      <div style={contentStyle}>{children}</div>
+      <div style={content}>{children}</div>
     </div>
+  );
+}
+
+function NavLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <Link href={href} style={linkStyle}>
+      {children}
+    </Link>
   );
 }
 
@@ -32,38 +39,38 @@ const headerStyle: React.CSSProperties = {
   borderBottom: "1px solid var(--border)",
   background: "var(--bg)",
 };
-const headerInnerStyle: React.CSSProperties = {
+const headerInner: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
   padding: "14px 24px",
-  maxWidth: 960,
+  maxWidth: 880,
   width: "100%",
   margin: "0 auto",
+  gap: 16,
 };
-const brandStyle: React.CSSProperties = {
+const brand: React.CSSProperties = {
+  fontSize: 14,
   fontWeight: 600,
-  fontSize: 15,
-  letterSpacing: -0.2,
-  textDecoration: "none",
   color: "var(--text)",
+  letterSpacing: -0.1,
 };
-const navStyle: React.CSSProperties = {
+const nav: React.CSSProperties = {
   display: "flex",
-  gap: 4,
+  gap: 2,
   alignItems: "center",
 };
 const linkStyle: React.CSSProperties = {
-  textDecoration: "none",
   color: "var(--text-muted)",
-  fontSize: 13.5,
+  fontSize: 13,
   padding: "6px 10px",
-  borderRadius: 6,
+  borderRadius: 5,
+  transition: "color 120ms",
 };
-const contentStyle: React.CSSProperties = {
+const content: React.CSSProperties = {
   flex: 1,
-  padding: "40px 24px 64px",
-  maxWidth: 960,
+  padding: "40px 24px 80px",
+  maxWidth: 880,
   width: "100%",
   margin: "0 auto",
 };

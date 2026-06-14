@@ -17,10 +17,10 @@ export function LogoutButton() {
 
 const style: React.CSSProperties = {
   background: "transparent",
-  border: "none",
+  border: 0,
   color: "var(--text-muted)",
   padding: "6px 10px",
-  fontSize: 13.5,
+  fontSize: 13,
   cursor: "pointer",
-  borderRadius: 6,
+  borderRadius: 5,
 };

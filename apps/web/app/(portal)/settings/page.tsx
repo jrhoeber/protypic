@@ -12,15 +12,32 @@ export default async function SettingsPage() {
 
   return (
     <main style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-      <h1 style={{ margin: 0, fontSize: 24, fontWeight: 600 }}>Settings</h1>
+      <header>
+        <h1 style={{ margin: 0, fontSize: 20, fontWeight: 600, letterSpacing: -0.3 }}>
+          Settings
+        </h1>
+      </header>
       <section style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        <h2 style={{ margin: 0, fontSize: 18 }}>MCP API tokens</h2>
-        <p style={{ margin: 0, color: "#a3a3a3", fontSize: 14 }}>
-          Create a token to use with <code>@protypic/mcp</code>. Tokens are shown once on
-          creation — store them securely.
-        </p>
+        <div>
+          <h2 style={{ margin: 0, fontSize: 14, fontWeight: 600 }}>API tokens</h2>
+          <p style={{ margin: "4px 0 0", color: "var(--text-muted)", fontSize: 12.5 }}>
+            For use with{" "}
+            <code style={inlineCode}>@protypic/mcp</code>. Shown once on
+            creation — store securely.
+          </p>
+        </div>
         <TokensPanel initial={tokens} />
       </section>
     </main>
   );
 }
+
+const inlineCode: React.CSSProperties = {
+  fontFamily: "var(--font-mono)",
+  fontSize: 12,
+  background: "var(--surface)",
+  border: "1px solid var(--border)",
+  padding: "1px 5px",
+  borderRadius: 3,
+  color: "var(--text)",
+};

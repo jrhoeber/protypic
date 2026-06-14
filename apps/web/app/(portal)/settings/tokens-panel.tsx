@@ -32,102 +32,131 @@ export function TokensPanel({ initial }: { initial: ApiToken[] }) {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      <div style={{ display: "flex", gap: 8 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <div style={createRow}>
         <input
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
-          placeholder="Token name (e.g. 'laptop')"
-          style={inputStyle}
+          placeholder="Token name (e.g. laptop)"
+          className="input"
+          onKeyDown={(e) => { if (e.key === "Enter") create(); }}
         />
-        <button onClick={create} disabled={busy || !newName.trim()} style={primaryBtnStyle}>
-          {busy ? "Creating…" : "Create token"}
+        <button onClick={create} disabled={busy || !newName.trim()} className="btn btn-primary">
+          {busy ? "Creating…" : "Create"}
         </button>
       </div>
 
-      {justCreated && (
-        <div style={alertStyle}>
-          <strong style={{ fontSize: 14 }}>Token created — copy it now.</strong>
-          <code style={codeStyle}>{justCreated.token}</code>
-          <button onClick={() => setJustCreated(null)} style={btnStyle}>Dismiss</button>
-        </div>
-      )}
+      {justCreated && <NewTokenAlert token={justCreated} onDismiss={() => setJustCreated(null)} />}
 
-      <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 8 }}>
-        {tokens.length === 0 ? (
-          <li style={{ color: "#a3a3a3", fontSize: 14 }}>No tokens yet.</li>
-        ) : (
-          tokens.map((t) => (
-            <li key={t.id} style={itemStyle}>
-              <div>
-                <div style={{ fontWeight: 500 }}>{t.name}</div>
-                <div style={{ color: "#a3a3a3", fontSize: 12 }}>
+      {tokens.length === 0 ? (
+        <p style={emptyText}>No tokens yet.</p>
+      ) : (
+        <ul className="divided" style={listStyle}>
+          {tokens.map((t) => (
+            <li key={t.id} style={rowStyle}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
+                <span style={{ fontSize: 13.5, fontWeight: 500 }}>{t.name}</span>
+                <span style={metaText}>
                   Created {new Date(t.createdAt).toLocaleDateString()}
-                  {t.lastUsedAt ? ` · last used ${new Date(t.lastUsedAt).toLocaleDateString()}` : " · never used"}
-                </div>
+                  {" · "}
+                  {t.lastUsedAt
+                    ? `last used ${new Date(t.lastUsedAt).toLocaleDateString()}`
+                    : "never used"}
+                </span>
               </div>
-              <button onClick={() => revoke(t.id)} style={{ ...btnStyle, color: "#fca5a5" }}>
+              <button onClick={() => revoke(t.id)} className="btn btn-ghost danger">
                 Revoke
               </button>
             </li>
-          ))
-        )}
-      </ul>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
 
-const inputStyle: React.CSSProperties = {
-  background: "#0a0a0a",
-  border: "1px solid #333",
+function NewTokenAlert({ token, onDismiss }: { token: ApiTokenWithSecret; onDismiss: () => void }) {
+  const [copied, setCopied] = useState(false);
+  async function copy() {
+    await navigator.clipboard.writeText(token.token);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  }
+  return (
+    <div style={alertStyle}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+        <strong style={{ fontSize: 13, fontWeight: 600 }}>Save this token now</strong>
+        <button onClick={onDismiss} className="btn btn-ghost" style={{ height: 22, padding: "0 6px" }}>
+          Dismiss
+        </button>
+      </div>
+      <p style={{ margin: 0, color: "var(--text-muted)", fontSize: 12.5 }}>
+        It won't be shown again.
+      </p>
+      <div style={tokenRow}>
+        <code style={tokenCode}>{token.token}</code>
+        <button onClick={copy} className="btn btn-primary" style={{ height: 30 }}>
+          {copied ? "Copied" : "Copy"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+const createRow: React.CSSProperties = {
+  display: "flex",
+  gap: 6,
+};
+const listStyle: React.CSSProperties = {
+  listStyle: "none",
+  padding: 0,
+  margin: 0,
+  border: "1px solid var(--border)",
   borderRadius: 8,
-  padding: "8px 12px",
-  color: "#fff",
-  fontSize: 14,
-  flex: 1,
+  background: "var(--surface)",
 };
-const btnStyle: React.CSSProperties = {
-  background: "transparent",
-  border: "1px solid #333",
-  borderRadius: 6,
-  color: "#fff",
-  padding: "6px 10px",
-  fontSize: 13,
-  cursor: "pointer",
-};
-const primaryBtnStyle: React.CSSProperties = {
-  background: "#fff",
-  color: "#0a0a0a",
-  border: 0,
-  borderRadius: 8,
-  padding: "8px 14px",
-  fontWeight: 600,
-  fontSize: 14,
-  cursor: "pointer",
-};
-const itemStyle: React.CSSProperties = {
+const rowStyle: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
-  padding: 12,
-  background: "#141414",
-  border: "1px solid #262626",
-  borderRadius: 8,
+  padding: "14px 16px",
+  gap: 12,
+};
+const metaText: React.CSSProperties = {
+  color: "var(--text-muted)",
+  fontSize: 12,
+};
+const emptyText: React.CSSProperties = {
+  margin: 0,
+  color: "var(--text-muted)",
+  fontSize: 13,
+  padding: "12px 4px",
 };
 const alertStyle: React.CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  gap: 8,
-  padding: 12,
-  background: "#1f1f0a",
-  border: "1px solid #4a4a1a",
+  gap: 10,
+  padding: 14,
+  background: "var(--surface)",
+  border: "1px solid var(--border-hover)",
   borderRadius: 8,
 };
-const codeStyle: React.CSSProperties = {
-  background: "#0a0a0a",
-  padding: "8px 10px",
+const tokenRow: React.CSSProperties = {
+  display: "flex",
+  alignItems: "stretch",
+  gap: 6,
+  background: "var(--bg)",
+  border: "1px solid var(--border)",
   borderRadius: 6,
-  fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
-  fontSize: 13,
+  padding: "6px 6px 6px 12px",
+  height: 42,
+};
+const tokenCode: React.CSSProperties = {
+  flex: 1,
+  fontFamily: "var(--font-mono)",
+  fontSize: 12.5,
+  color: "var(--text)",
+  background: "transparent",
   wordBreak: "break-all",
+  alignSelf: "center",
 };

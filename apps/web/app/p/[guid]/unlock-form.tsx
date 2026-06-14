@@ -31,18 +31,20 @@ export function UnlockForm({ prototypeId, name }: { prototypeId: string; name: s
   return (
     <main style={styles.page}>
       <form onSubmit={submit} style={styles.card}>
+        <span style={styles.brand}>protypic</span>
         <h1 style={styles.title}>{name}</h1>
-        <p style={styles.subtitle}>Enter the access code to view this prototype.</p>
+        <p style={styles.subtitle}>Enter the access code to view.</p>
         <input
           autoFocus
           type="text"
           value={code}
           onChange={(e) => setCode(e.target.value)}
           placeholder="Access code"
-          style={styles.input}
+          className="input"
+          style={{ fontFamily: "var(--font-mono)", fontSize: 13 }}
         />
         {error && <p style={styles.error}>{error}</p>}
-        <button type="submit" disabled={busy || !code.trim()} style={styles.button}>
+        <button type="submit" disabled={busy || !code.trim()} className="btn btn-primary" style={{ width: "100%", height: 38 }}>
           {busy ? "Checking…" : "Unlock"}
         </button>
       </form>
@@ -55,41 +57,35 @@ const styles: Record<string, React.CSSProperties> = {
     minHeight: "100dvh",
     display: "grid",
     placeItems: "center",
-    background: "#0a0a0a",
-    color: "#fff",
-    fontFamily: "ui-sans-serif, system-ui, -apple-system, sans-serif",
     padding: 24,
   },
   card: {
-    background: "#141414",
-    border: "1px solid #262626",
-    borderRadius: 12,
-    padding: 28,
     width: "100%",
-    maxWidth: 380,
+    maxWidth: 340,
+    background: "var(--surface)",
+    border: "1px solid var(--border)",
+    borderRadius: 10,
+    padding: 24,
     display: "flex",
     flexDirection: "column",
     gap: 12,
   },
-  title: { margin: 0, fontSize: 20, fontWeight: 600 },
-  subtitle: { margin: 0, color: "#a3a3a3", fontSize: 14 },
-  input: {
-    background: "#0a0a0a",
-    border: "1px solid #333",
-    borderRadius: 8,
-    padding: "10px 12px",
-    color: "#fff",
-    fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+  brand: {
+    fontSize: 12.5,
+    color: "var(--text-muted)",
+    fontWeight: 500,
+  },
+  title: {
+    margin: "2px 0 0",
+    fontSize: 17,
+    fontWeight: 600,
+    letterSpacing: -0.2,
+    color: "var(--text)",
+  },
+  subtitle: {
+    margin: 0,
+    color: "var(--text-muted)",
     fontSize: 13,
   },
-  button: {
-    background: "#fff",
-    color: "#0a0a0a",
-    border: 0,
-    borderRadius: 8,
-    padding: "10px 14px",
-    fontWeight: 600,
-    cursor: "pointer",
-  },
-  error: { margin: 0, color: "#fca5a5", fontSize: 13 },
+  error: { margin: 0, color: "var(--danger)", fontSize: 12.5 },
 };
