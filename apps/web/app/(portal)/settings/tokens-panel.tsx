@@ -91,7 +91,7 @@ function NewTokenAlert({ token, onDismiss }: { token: ApiTokenWithSecret; onDism
         </button>
       </div>
       <p style={{ margin: 0, color: "var(--text-muted)", fontSize: 12.5 }}>
-        It won't be shown again.
+        It won&apos;t be shown again.
       </p>
       <div style={tokenRow}>
         <code style={tokenCode}>{token.token}</code>

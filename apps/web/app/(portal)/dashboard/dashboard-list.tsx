@@ -229,7 +229,7 @@ function NewAccessCodeButton({
             <>
               <h2 style={modalTitle}>New access code</h2>
               <p style={modalBody}>
-                Save it now — it's shown only once. Already on your clipboard.
+                Save it now — it&apos;s shown only once. Already on your clipboard.
               </p>
               <Field label="Code" value={code ?? ""} mono primary />
               <Field label="Link" value={url} mono />

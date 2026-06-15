@@ -380,7 +380,7 @@ function ResultPanel({
     <div style={formStyle}>
       <h2 style={{ margin: 0, fontSize: 15.5, fontWeight: 600 }}>Uploaded</h2>
       <p style={{ margin: 0, color: "var(--text-muted)", fontSize: 13 }}>
-        Save the access code now — it's shown only once.
+        Save the access code now — it&apos;s shown only once.
       </p>
       <Row label="Link" value={result.url} mono />
       {result.accessCode && <Row label="Access code" value={result.accessCode} mono primary />}
