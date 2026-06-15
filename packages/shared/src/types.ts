@@ -5,10 +5,7 @@ export type Prototype = {
   createdAt: string;
   expiresAt: string | null;
   isProtected: boolean;
-  gcsPrefix: string;
   entryFile: string;
-  sizeBytes: number;
-  fileCount: number;
 };
 
 export type PrototypeWithAccessCode = Prototype & {

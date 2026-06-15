@@ -26,5 +26,3 @@ export const env = {
   authEmulator: () => optional("FIREBASE_AUTH_EMULATOR_HOST"),
   storageEmulator: () => optional("STORAGE_EMULATOR_HOST"),
 };
-
-export const isDev = process.env.NODE_ENV !== "production";

@@ -37,7 +37,7 @@ export type ValidatedFile = { path: string; bytes: Buffer };
 
 export function validateFiles(
   files: Array<{ path: string; contentBase64: string }>,
-): { files: ValidatedFile[]; totalBytes: number; entryFile: string } {
+): { files: ValidatedFile[]; entryFile: string } {
   if (files.length === 0) {
     throw new UploadValidationError("At least one file is required.");
   }
@@ -94,7 +94,7 @@ export function validateFiles(
     );
   }
 
-  return { files: out, totalBytes, entryFile };
+  return { files: out, entryFile };
 }
 
 const CONTENT_TYPES: Record<string, string> = {

@@ -1,7 +1,6 @@
-import type { Prototype, PrototypeWithAccessCode } from "@protypic/shared";
-import type { ExpirationDays } from "@protypic/shared";
+import type { Prototype, PrototypeWithAccessCode, ExpirationDays } from "@protypic/shared";
 import { adminDb } from "./firebase-admin";
-import { deletePrototypeFiles, gcsPrefix, uploadPrototypeFiles } from "./gcs";
+import { deletePrototypeFiles, uploadPrototypeFiles } from "./gcs";
 import { validateFiles } from "./file-validation";
 import { hashAccessCode } from "./access-code";
 import { newGuid } from "./guid";
@@ -22,10 +21,7 @@ type DocFields = {
   expiresAt: Timestamp | null;
   isProtected: boolean;
   accessCodeHash: string | null;
-  gcsPrefix: string;
   entryFile: string;
-  sizeBytes: number;
-  fileCount: number;
 };
 
 function toPrototype(id: string, d: DocFields): Prototype {
@@ -36,10 +32,7 @@ function toPrototype(id: string, d: DocFields): Prototype {
     createdAt: d.createdAt.toDate().toISOString(),
     expiresAt: d.expiresAt ? d.expiresAt.toDate().toISOString() : null,
     isProtected: d.isProtected,
-    gcsPrefix: d.gcsPrefix,
     entryFile: d.entryFile,
-    sizeBytes: d.sizeBytes,
-    fileCount: d.fileCount,
   };
 }
 
@@ -50,7 +43,7 @@ export async function createPrototype(input: {
   isProtected: boolean;
   files: Array<{ path: string; contentBase64: string }>;
 }): Promise<PrototypeWithAccessCode> {
-  const { files: validated, totalBytes, entryFile } = validateFiles(input.files);
+  const { files: validated, entryFile } = validateFiles(input.files);
   const id = newGuid();
   const accessCode = input.isProtected ? newGuid() : null;
   const accessCodeHash = accessCode ? hashAccessCode(accessCode) : null;
@@ -65,10 +58,7 @@ export async function createPrototype(input: {
     expiresAt: expiresAt ? Timestamp.fromDate(expiresAt) : null,
     isProtected: input.isProtected,
     accessCodeHash,
-    gcsPrefix: gcsPrefix(id),
     entryFile,
-    sizeBytes: totalBytes,
-    fileCount: validated.length,
   };
   await adminDb().collection(COL).doc(id).set(doc);
 

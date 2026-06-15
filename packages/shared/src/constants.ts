@@ -1,5 +1,4 @@
-export const EXPIRATION_OPTIONS = [1, 7, 30, 90, null] as const;
-export type ExpirationDays = (typeof EXPIRATION_OPTIONS)[number];
+export type ExpirationDays = 1 | 7 | 30 | 90 | null;
 
 export const MAX_FILES_PER_PROTOTYPE = 200;
 export const MAX_TOTAL_BYTES = 50 * 1024 * 1024;

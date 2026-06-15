@@ -44,6 +44,6 @@ export async function deletePrototypeFiles(id: string): Promise<void> {
   await bucket().deleteFiles({ prefix: gcsPrefix(id), force: true });
 }
 
-export function gcsPrefix(id: string): string {
+function gcsPrefix(id: string): string {
   return `p/${id}/`;
 }

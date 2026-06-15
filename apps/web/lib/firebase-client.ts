@@ -17,7 +17,7 @@ const config = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID!,
 };
 
-export function clientApp() {
+function clientApp() {
   return getApps().length ? getApp() : initializeApp(config);
 }
 

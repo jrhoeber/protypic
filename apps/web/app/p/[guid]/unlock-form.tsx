@@ -20,10 +20,6 @@ export function UnlockForm({ prototypeId, name }: { prototypeId: string; name: s
       window.location.href = res.url;
       return;
     }
-    if (res.ok) {
-      window.location.href = `/p/${prototypeId}`;
-      return;
-    }
     setError(res.status === 401 ? "Wrong access code." : "Something went wrong.");
     setBusy(false);
   }

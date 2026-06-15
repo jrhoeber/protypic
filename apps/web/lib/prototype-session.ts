@@ -36,18 +36,6 @@ export function buildUnlockCookie(guid: string, prototypeExpiresAt: Date | null)
   };
 }
 
-export function setUnlockCookie(guid: string, prototypeExpiresAt: Date | null): UnlockCookie {
-  const c = buildUnlockCookie(guid, prototypeExpiresAt);
-  cookies().set(c.name, c.value, {
-    path: c.path,
-    expires: c.expiresAt,
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-  });
-  return c;
-}
-
 export function verifyUnlockCookie(guid: string): boolean {
   const raw = cookies().get(cookieName(guid))?.value;
   if (!raw) return false;
