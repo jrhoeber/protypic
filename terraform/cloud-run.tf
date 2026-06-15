@@ -1,3 +1,12 @@
+# Cron OIDC audience: a stable, non-circular URL. The scheduler signs an OIDC
+# token addressed to this audience; the app verifies the token presents this
+# exact value. Using the Cloud Run service URL would be circular (the service
+# would need its own output to set its own env). The LB URL is the same one
+# the scheduler now POSTs to, so audience and target stay consistent.
+locals {
+  cron_audience = "https://${var.domain}"
+}
+
 resource "google_cloud_run_v2_service" "web" {
   name     = "protypic-web"
   location = var.region
@@ -61,6 +70,18 @@ resource "google_cloud_run_v2_service" "web" {
         value = "https://${var.domain}"
       }
 
+      # Cron sweep authentication. The route verifies a Google-issued OIDC
+      # token whose audience must equal CRON_OIDC_AUDIENCE and whose email
+      # must equal CRON_SCHEDULER_SA.
+      env {
+        name  = "CRON_OIDC_AUDIENCE"
+        value = local.cron_audience
+      }
+      env {
+        name  = "CRON_SCHEDULER_SA"
+        value = google_service_account.scheduler.email
+      }
+
       env {
         name = "COOKIE_SECRET"
         value_source {
@@ -96,13 +117,16 @@ resource "google_cloud_scheduler_job" "sweep" {
   schedule    = "0 * * * *"
   time_zone   = "Etc/UTC"
 
+  # Hit the LB (not the *.run.app URL) because ingress is restricted to the
+  # internal load balancer. Audience must match what the app verifies in
+  # CRON_OIDC_AUDIENCE (see local.cron_audience above).
   http_target {
     http_method = "POST"
-    uri         = "${google_cloud_run_v2_service.web.uri}/api/cron/sweep"
+    uri         = "${local.cron_audience}/api/cron/sweep"
 
     oidc_token {
       service_account_email = google_service_account.scheduler.email
-      audience              = google_cloud_run_v2_service.web.uri
+      audience              = local.cron_audience
     }
   }
 

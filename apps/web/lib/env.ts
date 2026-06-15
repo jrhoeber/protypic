@@ -19,6 +19,8 @@ export const env = {
   // In prod we derive https://${VIEW_HOST} since the LB terminates TLS on 443.
   viewBaseUrl: () => process.env.VIEW_BASE_URL || `https://${required("VIEW_HOST")}`,
   publicAppUrl: () => process.env.NEXT_PUBLIC_APP_URL || "https://protypic.ai",
+  cronOidcAudience: () => required("CRON_OIDC_AUDIENCE"),
+  cronSchedulerSa: () => required("CRON_SCHEDULER_SA"),
 
   firestoreEmulator: () => optional("FIRESTORE_EMULATOR_HOST"),
   authEmulator: () => optional("FIREBASE_AUTH_EMULATOR_HOST"),

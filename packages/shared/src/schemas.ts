@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  MAX_FILES_PER_PROTOTYPE,
+  MAX_SINGLE_FILE_BASE64_CHARS,
+} from "./constants";
 
 export const expirationDaysSchema = z.union([
   z.literal(1),
@@ -23,12 +27,12 @@ export const uploadFileSchema = z.object({
     .refine((p) => !p.startsWith("/") && !p.includes(".."), {
       message: "path must be relative and may not contain '..'",
     }),
-  contentBase64: z.string().min(1),
+  contentBase64: z.string().min(1).max(MAX_SINGLE_FILE_BASE64_CHARS),
 });
 export type UploadFile = z.infer<typeof uploadFileSchema>;
 
 export const uploadRequestSchema = createPrototypeMetaSchema.extend({
-  files: z.array(uploadFileSchema).min(1),
+  files: z.array(uploadFileSchema).min(1).max(MAX_FILES_PER_PROTOTYPE),
 });
 export type UploadRequest = z.infer<typeof uploadRequestSchema>;
 

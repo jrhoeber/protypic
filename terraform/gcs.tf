@@ -16,14 +16,11 @@ resource "google_storage_bucket" "prototypes" {
     max_age_seconds = 3600
   }
 
-  lifecycle_rule {
-    condition {
-      age = 100 # safety net — anything older than 100 days is reaped
-    }
-    action {
-      type = "Delete"
-    }
-  }
+  # No age-based lifecycle. Prototypes are pruned by the hourly cron sweep
+  # (apps/web/app/api/cron/sweep) using each prototype's expiresAt. A blanket
+  # "delete at age=100d" rule would silently destroy user-selected "Never
+  # expire" prototypes — the dashboard would still show them as live but the
+  # underlying objects would be gone. Lifetime is owned by Firestore.
 
   depends_on = [google_project_service.enabled]
 }

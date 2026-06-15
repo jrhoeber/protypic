@@ -67,7 +67,9 @@ resource "google_iam_workload_identity_pool_provider" "github" {
     "attribute.ref"        = "assertion.ref"
   }
 
-  attribute_condition = "assertion.repository == \"${var.github_repo}\""
+  # Restrict federation to pushes to main in the configured repo. Any other
+  # branch (or PR fork) trying to mint a token for the deployer SA is rejected.
+  attribute_condition = "assertion.repository == \"${var.github_repo}\" && assertion.ref == \"refs/heads/main\""
 
   oidc {
     issuer_uri = "https://token.actions.githubusercontent.com"
